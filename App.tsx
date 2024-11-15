@@ -79,7 +79,7 @@ const App = () => {
     }} />
     <Button title="Pick Resume PDF" onPress={pickFile} />
     <Text style={{ margin: 10 }}>{file?.name}</Text>
-    {data.apiUrl ?
+    {data.apiUrl && file?.name ?
       <Button title="Parse Resume" onPress={uploadFile} /> : null}
     {Object.keys(apiResp).length && file?.name ? <>
       <Text style={{ margin: 10 }}>{`JSON Extracted From Resume\n\n`}{JSON.stringify(apiResp, null, 2)}</Text>
