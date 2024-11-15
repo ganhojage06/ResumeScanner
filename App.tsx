@@ -1,118 +1,91 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import React, { useEffect, useState } from 'react';
+import { View, Button, Alert, TextInput, Text, ScrollView } from 'react-native';
+import DocumentPicker from 'react-native-document-picker';
+import axios from 'axios';
+import Loader from './loader';
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+const App = () => {
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+  const [data, setData] = useState({})
+  const [file, setFile] = useState(null);
+  const [apiResp, setApiResp] = useState({})
+  const [showLoader, setShowLoader] = useState(false)
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
-
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  const pickFile = async () => {
+    try {
+      // Open document picker to select a PDF file
+      let result = await DocumentPicker.pick({
+        type: [DocumentPicker.types.pdf],
+      });
+      // Check if the file is within the size limit
+      if (result?.[0]?.size <= 10 * 1024 * 1024) { // 10 MB in bytes
+        setFile(result[0]);
+      } else {
+        Alert.alert('Error', 'File size exceeds 10 MB limit.');
+        setFile(null)
+        setApiResp({})
+      }
+    } catch (err) {
+      if (DocumentPicker.isCancel(err)) {
+        Alert.alert('Info', 'Upload resume to proceed');
+        setFile(null)
+        setApiResp({})
+      } else {
+        console.error('DocumentPicker Error:', err);
+        setFile(null)
+        setApiResp({})
+      }
+    }
   };
 
-  return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
+  const uploadFile = async () => {
+    setShowLoader(true)
+    const formData = new FormData();
+    formData.append('doc', {
+      uri: file.uri,
+      type: file.type,
+      name: file.name,
+    });
 
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
+    try {
+      axios.defaults.headers.post['Content-Type'] = 'multipart/form-data';
+      const response = await axios.post(data.apiUrl, formData, {
+        // headers: {
+        //   'Content-Type': 'multipart/form-data',
+        // },
+      });
+      // console.log('Response:', response.data, response.status);
+      if (response.status / 1 == 200) {
+        setApiResp(response.data)
+      }
+      else {
+        Alert.alert('Error', 'Failed to parse resume');
+        setApiResp({})
+      }
+      setShowLoader(false)
+    } catch (error) {
+      // console.log("errorr========>", error);
+      Alert.alert('Error', 'Failed to parse resume');
+      setShowLoader(false)
+      setApiResp({})
+    }
+  };
+
+  return (<ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+    <Loader visible={showLoader} />
+    <TextInput placeholder='Enter API URL' value={data.apiUrl} onChangeText={txt => {
+      setData({ ...data, apiUrl: txt })
+    }} />
+    <Button title="Pick Resume PDF" onPress={pickFile} />
+    <Text style={{ margin: 10 }}>{file?.name}</Text>
+    {data.apiUrl ?
+      <Button title="Parse Resume" onPress={uploadFile} /> : null}
+    {Object.keys(apiResp).length && file?.name ? <>
+      <Text style={{ margin: 10 }}>{`JSON Extracted From Resume\n\n`}{JSON.stringify(apiResp, null, 2)}</Text>
+    </> : null}
+  </ScrollView>
+  );
+};
 
 export default App;
