@@ -3,8 +3,7 @@ Step 1: Run `npm i` to install all dependencies.
 Step 2: Connect your mobile device to the PC via USB.  
 Step 3: Run `react-native run-android` to start the application.  
 Step 4: Message me for the ngrok API link.
-Step 5: Download the resume from this link for testing - 
-https://drive.google.com/drive/folders/1ZnHRcgEHQR3Z7suII5dldgZGxw57LHw9?usp=sharing
+Step 5: Download the resume from this link for testing - https://drive.google.com/drive/folders/1ZnHRcgEHQR3Z7suII5dldgZGxw57LHw9?usp=sharing
 
 
 # Drawbacks 
